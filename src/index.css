@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-sm;
+  }
+}
+
+body {
+  @apply bg-slate-100 text-slate-800;
+  font-family: 'Inter', system-ui, sans-serif;
+}
