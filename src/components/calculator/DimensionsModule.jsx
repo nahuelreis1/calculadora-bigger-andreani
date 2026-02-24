@@ -46,6 +46,8 @@ export default function DimensionsModule({
     onDimensionsChange,
     units,
     onUnitChange,
+    declaredValue,
+    onDeclaredValueChange,
     disabled
 }) {
     return (
@@ -112,6 +114,23 @@ export default function DimensionsModule({
                         unit={units.weight}
                         placeholder="0"
                     />
+                </div>
+
+                {/* Valor Declarado - se cobra el 2% como seguro */}
+                <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor Declarado <span className="text-slate-400 normal-case font-normal">(se suma 2% como seguro)</span></label>
+                    <div className="relative group">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400 pointer-events-none">$</span>
+                        <input
+                            type="number"
+                            value={declaredValue}
+                            onChange={(e) => onDeclaredValueChange(e.target.value)}
+                            placeholder="0"
+                            className="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium 
+                               focus:ring-2 focus:ring-andreani-red/20 focus:border-andreani-red outline-none transition-all
+                               group-hover:bg-white group-hover:border-slate-300 placeholder:font-normal"
+                        />
+                    </div>
                 </div>
             </div>
         </div>

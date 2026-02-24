@@ -5,6 +5,7 @@ import DimensionsModule from './components/calculator/DimensionsModule';
 import ExtraChargesModule from './components/calculator/ExtraChargesModule';
 import TotalPreview from './components/calculator/TotalPreview';
 import { calculateShippingCost } from './utils/pricing';
+import accesaLogo from './assets/ACCESA.svg';
 
 export default function App() {
   // Data State
@@ -18,6 +19,7 @@ export default function App() {
 
   const [surcharges, setSurcharges] = useState([]); // { name, value, type: $, % }
   const [taxes, setTaxes] = useState([]);
+  const [declaredValue, setDeclaredValue] = useState(''); // Valor declarado del producto
 
   // Cuando el usuario carga el CSV, guardamos toda la data acá.
   const handleDataLoaded = ({ pricingData, zips }) => {
@@ -48,7 +50,11 @@ export default function App() {
       return baseResult;
     }
 
-    // 3. Sumamos los extras (Impuestos, seguro, etc)
+    // 3. Seguro: 2% del valor declarado (siempre fijo)
+    const insuranceCost = (parseFloat(declaredValue) || 0) * 0.02;
+    const priceWithInsurance = baseResult.basePrice + insuranceCost;
+
+    // 4. Sumamos los extras (Recargos, Impuestos, etc)
     const calculateAddons = (items, currentTotal) => {
       return items.reduce((acc, item) => {
         const val = parseFloat(item.value) || 0;
@@ -59,19 +65,20 @@ export default function App() {
       }, 0);
     };
 
-    const surchargeTotal = calculateAddons(surcharges, baseResult.basePrice);
-    const subtotal = baseResult.basePrice + surchargeTotal;
+    const surchargeTotal = calculateAddons(surcharges, priceWithInsurance);
+    const subtotal = priceWithInsurance + surchargeTotal;
     const taxTotal = calculateAddons(taxes, subtotal);
     const total = subtotal + taxTotal;
 
     return {
       ...baseResult,
+      insuranceCost,
       surchargeTotal,
       taxTotal,
       total
     };
 
-  }, [pricingData, selectedZip, dimensions, units, surcharges, taxes]);
+  }, [pricingData, selectedZip, dimensions, units, surcharges, taxes, declaredValue]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-600 pb-20">
@@ -82,10 +89,11 @@ export default function App() {
           <div className="bg-andreani-red p-2 rounded-lg shadow-sm shadow-red-200">
             <Truck className="w-6 h-6 text-white" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-bold text-slate-800 tracking-tight">Calculadora Envios Bigger <span className="text-andreani-red">(Andreani)</span></h1>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">by Nahuel Reis</p>
           </div>
+          <img src={accesaLogo} alt="ACCESA" className="h-10 w-10 rounded-full object-cover opacity-70 hover:opacity-100 transition-opacity" />
         </div>
       </nav>
 
@@ -106,12 +114,14 @@ export default function App() {
               onDimensionsChange={(key, val) => setDimensions(d => ({ ...d, [key]: val }))}
               units={units}
               onUnitChange={(key, val) => setUnits(u => ({ ...u, [key]: val }))}
+              declaredValue={declaredValue}
+              onDeclaredValueChange={setDeclaredValue}
               disabled={!pricingData}
             />
 
             <div className="grid grid-cols-1 gap-6 items-start">
               <ExtraChargesModule
-                title="Recargos (Seguro, Etc)"
+                title="Recargos"
                 items={surcharges}
                 setItems={setSurcharges}
                 type="surcharge"

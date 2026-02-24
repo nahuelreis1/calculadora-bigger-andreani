@@ -17,7 +17,7 @@ export default function TotalPreview({ result }) {
         );
     }
 
-    const { volumetricWeight, chargeableWeight, basePrice, method, error, surchargeTotal, taxTotal, total } = result;
+    const { volumetricWeight, chargeableWeight, basePrice, method, error, insuranceCost, surchargeTotal, taxTotal, total } = result;
 
     if (error) {
         return (
@@ -65,6 +65,13 @@ export default function TotalPreview({ result }) {
                             <span>Tarifa Base</span>
                             <span className="font-medium text-white">{formatCurrency(basePrice)}</span>
                         </div>
+
+                        {insuranceCost > 0 && (
+                            <div className="flex justify-between items-center text-slate-400">
+                                <span>+ Seguro (2% V.D.)</span>
+                                <span>{formatCurrency(insuranceCost)}</span>
+                            </div>
+                        )}
 
                         {surchargeTotal > 0 && (
                             <div className="flex justify-between items-center text-slate-400">
