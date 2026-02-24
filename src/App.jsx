@@ -3,6 +3,7 @@ import { Truck } from 'lucide-react';
 import UploadZone from './components/UploadZone';
 import DimensionsModule from './components/calculator/DimensionsModule';
 import ExtraChargesModule from './components/calculator/ExtraChargesModule';
+import ShipmentDataModule from './components/calculator/ShipmentDataModule';
 import TotalPreview from './components/calculator/TotalPreview';
 import { calculateShippingCost } from './utils/pricing';
 import accesaLogo from './assets/ACCESA.svg';
@@ -133,6 +134,14 @@ export default function App() {
                 type="tax"
               />
             </div>
+
+            <ShipmentDataModule
+              dimensions={dimensions}
+              units={units}
+              declaredValue={declaredValue}
+              selectedZip={selectedZip}
+              disabled={!pricingData}
+            />
           </div>
 
           <div className="lg:col-span-1">
