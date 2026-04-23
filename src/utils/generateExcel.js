@@ -53,6 +53,7 @@ export async function generateAndreaniExcel({
     : 'xl/worksheets/sheet3.xml';
 
   const sheetXml = await zip.file(sheetFile).async('string');
+  const sharedStringsXml = await zip.file('xl/sharedStrings.xml').async('string');
 
   // 4. Normalizar dimensiones a cm y kg
   let h = parseFloat(dimensions.h) || 0;
@@ -67,9 +68,14 @@ export async function generateAndreaniExcel({
   const dv = parseFloat(declaredValue) || 0;
   const bultos = parseInt(shipmentData.bultos) || 1;
 
+  // Buscar el string completo "PROVINCIA / LOCALIDAD / CP" en sharedStrings
+  const zipRegex = new RegExp('>([^<]* / ' + selectedZip + ')<');
+  const match = sharedStringsXml.match(zipRegex);
+  const fullZipString = match ? match[1] : selectedZip;
+
   // 5. Construir la fila 3 como XML
   // Estilos: 1=normal, 2=entero, 3=obligatorio-resaltado (según las cols del template)
-  const row3Xml = `<x:row r="3" spans="1:22">`
+  const row3Xml = `<x:row r="3" spans="1:23">`
     + buildCell('A', weight, true, '1')
     + buildCell('B', volumen, true, '1')
     + buildCell('C', Math.round(h), true, '2')
@@ -80,25 +86,26 @@ export async function generateAndreaniExcel({
     + buildCell('H', shipmentData.numeroInterno || '', false, '1')
     + buildCell('I', shipmentData.remito || '', false, '1')
     + buildCell('J', shipmentData.remitosHijos || '', false, '3')
-    + buildCell('K', shipmentData.nombre || '', false, '1')
-    + buildCell('L', shipmentData.apellido || '', false, '1')
-    + buildCell('M', shipmentData.documentoTipo || 'DNI', false, '1')
-    + buildCell('N', shipmentData.documento || '', false, '1')
-    + buildCell('O', shipmentData.email || '', false, '1')
-    + buildCell('P', shipmentData.telefono || '', false, '3')
-    + buildCell('Q', shipmentData.calle || '', false, '1')
-    + buildCell('R', shipmentData.numero || '', false, '1')
-    + buildCell('S', shipmentData.piso || '', false, '1')
-    + buildCell('T', shipmentData.departamento || '', false, '1')
-    + buildCell('U', shipmentData.observaciones || '', false, '1')
-    + buildCell('V', selectedZip || '', false, '3')
+    + buildCell('K', '', false, '1') // Referencia (NUEVA COLUMNA)
+    + buildCell('L', shipmentData.nombre || '', false, '1')
+    + buildCell('M', shipmentData.apellido || '', false, '1')
+    + buildCell('N', shipmentData.documentoTipo || 'DNI', false, '1')
+    + buildCell('O', shipmentData.documento || '', false, '1')
+    + buildCell('P', shipmentData.email || '', false, '1')
+    + buildCell('Q', shipmentData.telefono || '', false, '3')
+    + buildCell('R', shipmentData.calle || '', false, '1')
+    + buildCell('S', shipmentData.numero || '', false, '1')
+    + buildCell('T', shipmentData.piso || '', false, '1')
+    + buildCell('U', shipmentData.departamento || '', false, '1')
+    + buildCell('V', shipmentData.observaciones || '', false, '1')
+    + buildCell('W', fullZipString || '', false, '3')
     + `</x:row>`;
 
   // 6. Inyectar la fila 3 justo antes de </x:sheetData>
-  // También actualizar el dimension ref de "A1:V2" a "A1:V3"
+  // También actualizar el dimension ref para abarcar hasta W3
   let modifiedXml = sheetXml
     .replace('</x:sheetData>', row3Xml + '</x:sheetData>')
-    .replace('ref="A1:V2"', 'ref="A1:V3"');
+    .replace(/ref="A1:[A-Z]\d+"/, 'ref="A1:W3"');
 
   // 7. Guardar el XML modificado en el ZIP
   zip.file(sheetFile, modifiedXml);
