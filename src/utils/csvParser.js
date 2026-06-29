@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import { processNuevoFormatoData } from './csvParserNuevoFormato.js';
 
 /**
  * Cleans price strings like "$ 1.200,50", "131.258.80", or "Excedente 375.02".
@@ -57,7 +58,10 @@ export const parseCSV = (file) => {
             skipEmptyLines: false, // We need empty lines to preserve relative structure if any, but logic uses offsets so maybe safer to read all
             complete: (results) => {
                 try {
-                    const processed = processCSVData(results.data);
+                    const token = sniffFirstNonEmptyRowToken(results.data);
+                    const processed = (token === 'Tipo origen')
+                        ? processNuevoFormatoData(results.data)
+                        : processCSVData(results.data);
                     resolve(processed);
                 } catch (e) {
                     reject(e);
@@ -66,6 +70,25 @@ export const parseCSV = (file) => {
             error: (err) => reject(err)
         });
     });
+};
+
+/**
+ * Devuelve el primer cell no vacío de la primera fila no vacía,
+ * normalizado (BOM stripped, trimmed). Usado por el dispatcher
+ * en parseCSV para detectar el formato del CSV antes de enrutar
+ * al processor correcto.
+ * @param {string[][]} data
+ * @returns {string | null}
+ */
+const sniffFirstNonEmptyRowToken = (data) => {
+    for (const row of data) {
+        if (!row || row.length === 0) continue;
+        const firstCell = row[0];
+        if (firstCell == null) continue;
+        const normalized = firstCell.toString().replace(/^\uFEFF/, '').trim();
+        if (normalized.length > 0) return normalized;
+    }
+    return null;
 };
 
 const processCSVData = (data) => {
